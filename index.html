@@ -6,31 +6,143 @@
     <title>Math Fact Rumble</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
         }
         #container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        #current-user {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        /* User Selection */
+        #user-selection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        select, input[type="text"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #new-user-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        /* Stats */
+        #stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        #stats span {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        /* Buttons */
         button {
-            padding: 8px 16px;
+            padding: 10px 20px;
             margin: 5px;
-            background-color: #4CAF50;
+            background-color: #3498db;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
         }
-        button:hover { background-color: #45a049; }
-        #clear-storage-btn { background-color: #f44336; }
-        #clear-storage-btn:hover { background-color: #d32f2f; }
-        #feedback { font-weight: bold; margin: 10px 0; }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.active {
+            background-color: #e67e22;
+        }
+        #reset-btn { background-color: #e74c3c; }
+        #reset-btn:hover { background-color: #c0392b; }
+        #clear-storage-btn { background-color: #e74c3c; }
+        #clear-storage-btn:hover { background-color: #c0392b; }
+        #operation-selection, #group-selection {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        /* Game Area */
+        #game-area {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #question {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        #answer {
+            font-size: 20px;
+            color: #7f8c8d;
+        }
+        #user-input {
+            width: 80px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        #feedback {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 15px 0;
+            min-height: 24px;
+        }
+        #feedback.green { color: #27ae60; }
+        #feedback.red { color: #c0392b; }
+        /* Progress */
+        #group-progress {
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            background: #ecf0f1;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        /* Controls */
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -38,41 +150,42 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
         }
         .modal-content {
-            background: white;
-            margin: 50px auto;
-            padding: 20px;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 8px;
+            background: #fff;
+            margin: 5% auto;
+            padding: 25px;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             max-height: 80vh;
             overflow-y: auto;
         }
-        .progress-bar {
-            width: 100%;
-            background: #ddd;
-            height: 20px;
-            border-radius: 10px;
-            margin: 5px 0;
+        .modal-content h2 {
+            margin-top: 0;
+            color: #2c3e50;
         }
-        .progress-fill {
-            height: 100%;
-            background: #4CAF50;
-            border-radius: 10px;
+        details { margin: 15px 0; }
+        summary {
+            cursor: pointer;
+            padding: 5px;
+            background: #f9f9f9;
+            border-radius: 4px;
         }
-        details { margin: 10px 0; }
-        summary { cursor: pointer; }
-        ul { padding-left: 20px; }
-        #new-user-input { margin-top: 10px; }
+        ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <h1>Math Fact Rumble</h1>
         <div id="current-user">Current User: None</div>
-        <div>
+        <div id="user-selection">
             <select id="user-select"><option value="" selected>Select a user</option></select>
             <button id="load-user-btn">Load User</button>
             <button id="add-user-btn">Add User</button>
@@ -81,9 +194,11 @@
             <input type="text" id="user-name" placeholder="Enter user name">
             <button id="save-name-btn">Save</button>
         </div>
-        <div>Total Mastered: <span id="mastery-count">0</span></div>
-        <div>Operation Mastery: <span id="op-mastery">0/144</span></div>
-        <div>Points: <span id="user-points">0</span> | Level: <span id="user-level">Novice</span> | Streak: <span id="streak-count">0</span></div>
+        <div id="stats">
+            <div>Total Mastered: <span id="mastery-count">0</span></div>
+            <div>Operation Mastery: <span id="op-mastery">0/144</span></div>
+            <div>Points: <span id="user-points">0</span> | Level: <span id="user-level">Novice</span> | Streak: <span id="streak-count">0</span></div>
+        </div>
         <div id="operation-selection">
             <button id="addBtn">Addition</button>
             <button id="subBtn">Subtraction</button>
@@ -97,16 +212,18 @@
             <button class="group-btn" data-group="3">Group 4</button>
         </div>
         <div id="group-progress"></div>
-        <div id="question"></div>
-        <span id="answer"></span>
-        <input type="number" id="user-input" style="display: none;">
-        <div>
-            <button id="coverBtn" style="display: none;">Cover</button>
-            <button id="compareBtn" style="display: none;">Compare</button>
-            <button id="nextBtn" style="display: none;">Next</button>
+        <div id="game-area">
+            <div id="question"></div>
+            <span id="answer"></span>
+            <input type="number" id="user-input" style="display: none;">
+            <div>
+                <button id="coverBtn" style="display: none;">Cover</button>
+                <button id="compareBtn" style="display: none;">Compare</button>
+                <button id="nextBtn" style="display: none;">Next</button>
+            </div>
+            <div id="feedback">Select or add a user to start!</div>
         </div>
-        <div id="feedback">Select or add a user to start!</div>
-        <div>
+        <div id="controls">
             <button id="reset-btn">Reset Progress</button>
             <button id="clear-storage-btn">Clear Local Storage</button>
             <a href="#" id="summary-link">Mastery Summary</a>
@@ -256,7 +373,7 @@
             });
 
             addUserBtn.addEventListener("click", () => {
-                newUserInput.style.display = "block";
+                newUserInput.style.display = "flex";
                 userNameInput.focus();
             });
 
@@ -334,13 +451,16 @@
                     if (streak % 3 === 0) {
                         points += 20;
                         feedbackEl.textContent = `Streak ${streak}! +20 Bonus!`;
+                        feedbackEl.classList.add("green");
                     } else {
                         feedbackEl.textContent = "You pinned that fact!";
+                        feedbackEl.classList.add("green");
                     }
-                    feedbackEl.style.color = "green";
+                    feedbackEl.classList.remove("red");
                 } else {
                     feedbackEl.textContent = `Ouch! It’s ${currentFact.a}. Try again!`;
-                    feedbackEl.style.color = "red";
+                    feedbackEl.classList.add("red");
+                    feedbackEl.classList.remove("green");
                     streak = 0;
                 }
                 saveUserData();
@@ -404,7 +524,7 @@
                 selectedGroup = null;
                 document.querySelectorAll("#operation-selection button").forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
-                groupSelection.style.display = "block";
+                groupSelection.style.display = "flex";
                 document.querySelectorAll(".group-btn").forEach(b => b.classList.remove("active"));
                 updateMasteryCount();
                 updateGroupProgress();
