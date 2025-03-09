@@ -28,6 +28,8 @@
             cursor: pointer;
         }
         button:hover { background-color: #45a049; }
+        #clear-storage-btn { background-color: #f44336; }
+        #clear-storage-btn:hover { background-color: #d32f2f; }
         #feedback { font-weight: bold; margin: 10px 0; }
         .modal {
             display: none;
@@ -74,7 +76,6 @@
             <select id="user-select"><option value="" selected>Select a user</option></select>
             <button id="load-user-btn">Load User</button>
             <button id="add-user-btn">Add User</button>
-            <button id="clear-data-btn">Clear Local Data</button>
         </div>
         <div id="new-user-input" style="display: none;">
             <input type="text" id="user-name" placeholder="Enter user name">
@@ -107,6 +108,7 @@
         <div id="feedback">Select or add a user to start!</div>
         <div>
             <button id="reset-btn">Reset Progress</button>
+            <button id="clear-storage-btn">Clear Local Storage</button>
             <a href="#" id="summary-link">Mastery Summary</a>
             <a href="#" id="teacher-report-link">Teacher Report</a>
         </div>
@@ -163,6 +165,7 @@
             const mulBtn = document.getElementById("mulBtn");
             const divBtn = document.getElementById("divBtn");
             const resetBtn = document.getElementById("reset-btn");
+            const clearStorageBtn = document.getElementById("clear-storage-btn");
             const summaryLink = document.getElementById("summary-link");
             const teacherReportLink = document.getElementById("teacher-report-link");
             const masterySummary = document.getElementById("mastery-summary");
@@ -387,4 +390,280 @@
                         mastery[selectedOp][f.q] && mastery[selectedOp][f.q].correct >= 3).length;
                     const progressPercent = (masteredInGroup / 36) * 100;
                     content += `<div>Group ${g + 1} (${g * 3 + 1}-${g * 3 + 3}): ${masteredInGroup}/36</div>`;
-                    content += `<div class="progress-bar"><div class="progress-fill" style="width: ${
+                    content += `<div class="progress-bar"><div class="progress-fill" style="width: ${progressPercent}%"></div></div>`;
+                }
+                groupProgress.innerHTML = content;
+            }
+
+            function setOperation(op, btn) {
+                if (!currentUser) {
+                    feedbackEl.textContent = "Select or add a user to start!";
+                    return;
+                }
+                selectedOp = op;
+                selectedGroup = null;
+                document.querySelectorAll("#operation-selection button").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                groupSelection.style.display = "block";
+                document.querySelectorAll(".group-btn").forEach(b => b.classList.remove("active"));
+                updateMasteryCount();
+                updateGroupProgress();
+                questionEl.textContent = "";
+                answerEl.textContent = "";
+                coverBtn.style.display = "none";
+                compareBtn.style.display = "none";
+                nextBtn.style.display = "none";
+                userInput.style.display = "none";
+            }
+
+            addBtn.addEventListener("click", () => setOperation("addition", addBtn));
+            subBtn.addEventListener("click", () => setOperation("subtraction", subBtn));
+            mulBtn.addEventListener("click", () => setOperation("multiplication", mulBtn));
+            divBtn.addEventListener("click", () => setOperation("division", divBtn));
+
+            document.querySelectorAll(".group-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    selectedGroup = parseInt(btn.dataset.group);
+                    document.querySelectorAll(".group-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    displayFact();
+                });
+            });
+
+            resetBtn.addEventListener("click", () => {
+                if (!currentUser) {
+                    feedbackEl.textContent = "Select or add a user to start!";
+                    return;
+                }
+                if (confirm(`Are you sure you want to reset ${currentUser}'s progress?`)) {
+                    mastery = { addition: {}, subtraction: {}, multiplication: {}, division: {} };
+                    points = 0;
+                    streak = 0;
+                    saveUserData();
+                    updateMasteryCount();
+                    updatePointsAndLevel();
+                    updateGroupProgress();
+                    feedbackEl.textContent = "Progress reset! Pick an operation to start.";
+                    questionEl.textContent = "";
+                    answerEl.textContent = "";
+                    coverBtn.style.display = "none";
+                    compareBtn.style.display = "none";
+                    nextBtn.style.display = "none";
+                    userInput.style.display = "none";
+                }
+            });
+
+            clearStorageBtn.addEventListener("click", () => {
+                if (confirm("Are you sure you want to clear all local storage? This will erase all users and progress!")) {
+                    localStorage.clear();
+                    currentUser = null;
+                    mastery = { addition: {}, subtraction: {}, multiplication: {}, division: {} };
+                    points = 0;
+                    streak = 0;
+                    currentUserEl.textContent = "Current User: None";
+                    populateUserDropdown();
+                    updateMasteryCount();
+                    updatePointsAndLevel();
+                    updateGroupProgress();
+                    feedbackEl.textContent = "Local storage cleared! Add a user to start.";
+                    questionEl.textContent = "";
+                    answerEl.textContent = "";
+                    coverBtn.style.display = "none";
+                    compareBtn.style.display = "none";
+                    nextBtn.style.display = "none";
+                    userInput.style.display = "none";
+                    groupSelection.style.display = "none";
+                    document.querySelectorAll("#operation-selection button").forEach(b => b.classList.remove("active"));
+                }
+            });
+
+            summaryLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    feedbackEl.textContent = "Select or add a user to view summary!";
+                    return;
+                }
+                masterySummary.style.display = "block";
+                let content = `<p>Points: ${points} | Level: ${userLevelEl.textContent} | Best Streak: ${streak}</p>`;
+                Object.keys(mastery).forEach(op => {
+                    content += `<details><summary>${op.charAt(0).toUpperCase() + op.slice(1)}</summary>`;
+                    for (let g = 0; g < 4; g++) {
+                        const groupFacts = facts[op].filter(f => f.group === g);
+                        const masteredFacts = groupFacts.filter(f => 
+                            mastery[op][f.q] && mastery[op][f.q].correct >= 3).map(f => f.q);
+                        const notMasteredFacts = groupFacts.filter(f => 
+                            mastery[op][f.q] && mastery[op][f.q].correct < 3 && mastery[op][f.q].attempts > 0).map(f => f.q);
+                        const progressPercent = (masteredFacts.length / 36) * 100;
+                        content += `<h4>Group ${g + 1} (${g * 3 + 1}-${g * 3 + 3})</h4>`;
+                        content += `<div class="progress-bar"><div class="progress-fill" style="width: ${progressPercent}%"></div></div>`;
+                        content += `<p>Mastered: ${masteredFacts.length}/36</p>`;
+                        content += `<details><summary>Mastered (${masteredFacts.length})</summary><ul>`;
+                        masteredFacts.forEach(fact => content += `<li>${fact}</li>`);
+                        content += `</ul></details>`;
+                        content += `<details><summary>Not Mastered (${notMasteredFacts.length})</summary><ul>`;
+                        notMasteredFacts.forEach(fact => content += `<li>${fact}</li>`);
+                        content += `</ul></details>`;
+                    }
+                    content += `</details>`;
+                });
+                summaryContent.innerHTML = content || "No facts attempted yet!";
+            });
+
+            teacherReportLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (!teacherReport) return console.error("teacherReport not found");
+                teacherReport.style.display = "block";
+                let users = JSON.parse(localStorage.getItem("mathFactRumbleUsers")) || [];
+                let content = "";
+                console.log("Users loaded:", users);
+                if (users.length === 0) {
+                    content = "No users have played yet.";
+                } else {
+                    users.forEach(user => {
+                        const userDataRaw = localStorage.getItem(`mathFactRumbleMastery_${user}`);
+                        const userDataDefault = {
+                            mastery: { addition: {}, subtraction: {}, multiplication: {}, division: {} },
+                            points: 0,
+                            streak: 0
+                        };
+                        const userData = userDataRaw ? JSON.parse(userDataRaw) : userDataDefault;
+                        userData.mastery = {
+                            addition: userData.mastery.addition || {},
+                            subtraction: userData.mastery.subtraction || {},
+                            multiplication: userData.mastery.multiplication || {},
+                            division: userData.mastery.division || {}
+                        };
+                        console.log("Teacher Report User Data:", user, userData);
+                        const totalMastered = Object.keys(userData.mastery).reduce((sum, op) => {
+                            return sum + Object.values(userData.mastery[op]).filter(m => m.correct >= 3).length;
+                        }, 0);
+                        content += `<h3>${user} (Total Mastered: ${totalMastered}, Points: ${userData.points}, Best Streak: ${userData.streak})</h3>`;
+                        Object.keys(userData.mastery).forEach(op => {
+                            const opMastered = Object.values(userData.mastery[op]).filter(m => m.correct >= 3).length;
+                            content += `<details><summary>${op.charAt(0).toUpperCase() + op.slice(1)} (Mastered: ${opMastered}/144)</summary>`;
+                            const allAttempts = Object.entries(userData.mastery[op])
+                                .filter(([_, data]) => data.attempts > 0)
+                                .map(([q, data]) => ({ q, ...data }));
+                            console.log(`Attempts for ${op} by ${user}:`, allAttempts);
+                            if (allAttempts.length > 0) {
+                                content += `<ul>`;
+                                allAttempts.forEach(f => {
+                                    const incorrect = f.attempts - f.correct;
+                                    content += `<li>${f.q} - Attempts: ${f.attempts}, Correct: ${f.correct}, Incorrect: ${incorrect}</li>`;
+                                });
+                                content += `</ul>`;
+                            } else {
+                                content += `<p>No attempts recorded for this operation.</p>`;
+                            }
+                            content += `</details>`;
+                        });
+                    });
+                }
+                console.log("Setting reportContent to:", content);
+                if (!reportContent) console.error("reportContent not found");
+                reportContent.innerHTML = content || "No user progress recorded yet!";
+            });
+
+            downloadBtn.addEventListener("click", () => {
+                if (!currentUser) {
+                    feedbackEl.textContent = "Select or add a user to download results!";
+                    return;
+                }
+                let csvContent = "Operation,Group,Fact,Status,Points,Streak\n";
+                Object.keys(mastery).forEach(op => {
+                    for (let g = 0; g < 4; g++) {
+                        const groupFacts = facts[op].filter(f => f.group === g);
+                        const masteredFacts = groupFacts.filter(f => 
+                            mastery[op][f.q] && mastery[op][f.q].correct >= 3).map(f => f.q);
+                        const notMasteredFacts = groupFacts.filter(f => 
+                            mastery[op][f.q] && mastery[op][f.q].correct < 3 && mastery[op][f.q].attempts > 0).map(f => f.q);
+                        masteredFacts.forEach(fact => {
+                            csvContent += `${op},${g + 1} (${g * 3 + 1}-${g * 3 + 3}),"${fact}",Mastered,${points},${streak}\n`;
+                        });
+                        notMasteredFacts.forEach(fact => {
+                            csvContent += `${op},${g + 1} (${g * 3 + 1}-${g * 3 + 3}),"${fact}",Not Mastered,${points},${streak}\n`;
+                        });
+                    }
+                });
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `math_fact_rumble_results_${currentUser}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            downloadReportBtn.addEventListener("click", () => {
+                const now = new Date().toISOString();
+                let csvContent = `Teacher Report - Generated: ${now}\n`;
+                csvContent += "User,Operation,Group,Fact,Attempts,Correct,Incorrect,Mastered,Points,Streak,Last Attempt\n";
+                let users = JSON.parse(localStorage.getItem("mathFactRumbleUsers")) || [];
+                console.log("Download Users:", users);
+                if (users.length === 0) {
+                    csvContent += "No users have played yet.\n";
+                } else {
+                    users.forEach(user => {
+                        const userDataRaw = localStorage.getItem(`mathFactRumbleMastery_${user}`);
+                        const userDataDefault = {
+                            mastery: { addition: {}, subtraction: {}, multiplication: {}, division: {} },
+                            points: 0,
+                            streak: 0
+                        };
+                        const userData = userDataRaw ? JSON.parse(userDataRaw) : userDataDefault;
+                        userData.mastery = {
+                            addition: userData.mastery.addition || {},
+                            subtraction: userData.mastery.subtraction || {},
+                            multiplication: userData.mastery.multiplication || {},
+                            division: userData.mastery.division || {}
+                        };
+                        console.log("Download Report User Data:", user, userData);
+                        Object.keys(userData.mastery).forEach(op => {
+                            const allAttempts = Object.entries(userData.mastery[op])
+                                .filter(([_, data]) => data.attempts > 0)
+                                .map(([q, data]) => {
+                                    const fact = facts[op].find(f => f.q === q);
+                                    const group = fact ? `${fact.group + 1} (${fact.group * 3 + 1}-${fact.group * 3 + 3})` : "Unknown";
+                                    return { q, group, ...data };
+                                });
+                            allAttempts.sort((a, b) => a.q.localeCompare(b.q));
+                            allAttempts.forEach(f => {
+                                const incorrect = f.attempts - f.correct;
+                                const mastered = f.correct >= 3 ? "Yes" : "No";
+                                const lastAttempt = f.lastAttempt || "N/A";
+                                csvContent += `"${user}",${op},"${f.group}","${f.q}",${f.attempts},${f.correct},${incorrect},${mastered},${userData.points},${userData.streak},${lastAttempt}\n`;
+                            });
+                        });
+                    });
+                }
+                console.log("Generated CSV:", csvContent);
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `math_fact_rumble_teacher_report_${now.replace(/:/g, "-")}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            closeSummaryBtn.addEventListener("click", () => {
+                masterySummary.style.display = "none";
+            });
+
+            closeReportBtn.addEventListener("click", () => {
+                teacherReport.style.display = "none";
+            });
+
+            feedbackEl.textContent = "Select or add a user to start!";
+            opMasteryEl.textContent = "0/144";
+            populateUserDropdown();
+            const lastUser = localStorage.getItem("mathFactRumbleCurrentUser");
+            if (lastUser) loadUserData(lastUser);
+        });
+    </script>
+</body>
+</html>
