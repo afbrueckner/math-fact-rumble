@@ -30,13 +30,12 @@
             color: #34495e;
             margin-bottom: 15px;
         }
-        /* User Selection */
         #user-selection {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 20px;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
+            flex-wrap: wrap;
             justify-content: center;
         }
         select, input[type="text"] {
@@ -51,7 +50,6 @@
             margin-top: 10px;
             justify-content: center;
         }
-        /* Stats */
         #stats {
             display: flex;
             justify-content: space-between;
@@ -65,47 +63,44 @@
             font-weight: bold;
             color: #2c3e50;
         }
-        /* Buttons - General Styling */
         button {
-            padding: 12px 24px; /* Slightly larger for touch screens */
-            margin: 8px; /* Increased spacing */
+            padding: 12px 24px;
+            margin: 8px;
             background-color: #3498db;
             color: white;
             border: none;
-            border-radius: 8px; /* Softer corners */
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s; /* Add scale effect */
-            font-size: 16px; /* Larger text for readability */
-            min-width: 120px; /* Prevent buttons from shrinking too much */
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 16px;
+            min-width: 120px;
         }
         button:hover {
             background-color: #2980b9;
-            transform: scale(1.05); /* Slight grow on hover */
+            transform: scale(1.05);
         }
         button.active {
             background-color: #e67e22;
-            transform: scale(1.05); /* Stay scaled when active */
+            transform: scale(1.05);
         }
         #reset-btn { background-color: #e74c3c; }
         #reset-btn:hover { background-color: #c0392b; }
         #clear-storage-btn { background-color: #e74c3c; }
         #clear-storage-btn:hover { background-color: #c0392b; }
-        /* Operation and Group Selection */
         #operation-selection, #group-selection {
             display: flex;
-            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
-            justify-content: center; /* Center buttons */
-            gap: 15px; /* Consistent spacing */
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 20px;
             padding: 10px;
-            background: #eef2f7; /* Subtle background for visual grouping */
+            background: #eef2f7;
             border-radius: 8px;
-            max-width: 100%; /* Prevent overflow */
+            max-width: 100%;
         }
         #group-selection {
-            display: none; /* Hidden by default, as before */
+            display: none;
         }
-        /* Game Area */
         #game-area {
             text-align: center;
             margin-bottom: 20px;
@@ -142,35 +137,8 @@
         }
         #feedback.green { color: #27ae60; }
         #feedback.red { color: #c0392b; }
-        /* Progress */
-        #group-progress {
-            margin: 20px 0;
-        }
-        .progress-bar {
-            width: 100%;
-            background: #ecf0f1;
-            height: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-        }
-        .progress-fill {
-            height: 100%;
-            background: #2ecc71;
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-        /* Controls */
-        #controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        /* Modals */
-        .modal {
+        /* Progress Modal */
+        #progress-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -195,6 +163,38 @@
             margin-top: 0;
             color: #2c3e50;
         }
+        .progress-bar {
+            width: 100%;
+            background: #ecf0f1;
+            height: 25px; /* Slightly taller for visibility */
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+        }
         details { margin: 15px 0; }
         summary {
             cursor: pointer;
@@ -206,7 +206,6 @@
             padding-left: 20px;
             margin: 10px 0;
         }
-        /* Media Query for Smaller Screens */
         @media (max-width: 600px) {
             button {
                 padding: 10px 20px;
@@ -253,7 +252,6 @@
             <button class="group-btn" data-group="1">Mid-Tier</button>
             <button class="group-btn" data-group="2">Higher Facts</button>
         </div>
-        <div id="group-progress"></div>
         <div id="game-area">
             <div id="question"></div>
             <span id="answer"></span>
@@ -268,8 +266,16 @@
         <div id="controls">
             <button id="reset-btn">Reset Progress</button>
             <button id="clear-storage-btn">Clear Local Storage</button>
+            <button id="progress-btn">Check Progress</button>
             <a href="#" id="summary-link">Mastery Summary</a>
             <a href="#" id="teacher-report-link">Teacher Report</a>
+        </div>
+        <div id="progress-modal" class="modal">
+            <div class="modal-content">
+                <h2>Group Progress</h2>
+                <div id="progress-content"></div>
+                <button id="close-progress">Close</button>
+            </div>
         </div>
         <div id="mastery-summary" class="modal">
             <div class="modal-content">
@@ -305,9 +311,9 @@
                     for (let a = 1; a <= 12; a++) {
                         for (let b = 1; b <= 12; b++) {
                             let group;
-                            if ([1, 2, 5, 10].includes(a)) group = 0; // Base Facts
-                            else if ([3, 4].includes(a)) group = 1;   // Mid-Tier
-                            else group = 2;                           // Higher Facts (6, 7, 8, 9)
+                            if ([1, 2, 5, 10].includes(a)) group = 0;
+                            else if ([3, 4].includes(a)) group = 1;
+                            else group = 2;
                             mulFacts.push({ q: `${a} × ${b}`, a: a * b, group });
                         }
                     }
@@ -352,7 +358,10 @@
             const saveNameBtn = document.getElementById("save-name-btn");
             const currentUserEl = document.getElementById("current-user");
             const groupSelection = document.getElementById("group-selection");
-            const groupProgress = document.getElementById("group-progress");
+            const progressBtn = document.getElementById("progress-btn");
+            const progressModal = document.getElementById("progress-modal");
+            const progressContent = document.getElementById("progress-content");
+            const closeProgressBtn = document.getElementById("close-progress");
             const userPointsEl = document.getElementById("user-points");
             const userLevelEl = document.getElementById("user-level");
             const streakCountEl = document.getElementById("streak-count");
@@ -517,7 +526,6 @@
                 saveUserData();
                 updateMasteryCount();
                 updatePointsAndLevel();
-                updateGroupProgress();
                 compareBtn.style.display = "none";
                 nextBtn.style.display = "inline";
                 nextBtn.focus();
@@ -554,7 +562,10 @@
             }
 
             function updateGroupProgress() {
-                if (!selectedOp) return;
+                if (!selectedOp) {
+                    progressContent.innerHTML = "Select an operation to see progress!";
+                    return;
+                }
                 let content = "";
                 const groupCount = selectedOp === "multiplication" ? 3 : 4;
                 const groupNames = selectedOp === "multiplication" ? 
@@ -569,8 +580,21 @@
                     content += `<div>Group ${g + 1} (${groupNames[g]}): ${masteredInGroup}/${factsPerGroup[g]}</div>`;
                     content += `<div class="progress-bar"><div class="progress-fill" style="width: ${progressPercent}%"></div></div>`;
                 }
-                groupProgress.innerHTML = content;
+                progressContent.innerHTML = content;
             }
+
+            progressBtn.addEventListener("click", () => {
+                if (!currentUser) {
+                    feedbackEl.textContent = "Select or add a user to check progress!";
+                    return;
+                }
+                updateGroupProgress();
+                progressModal.style.display = "block";
+            });
+
+            closeProgressBtn.addEventListener("click", () => {
+                progressModal.style.display = "none";
+            });
 
             function setOperation(op, btn) {
                 if (!currentUser) {
@@ -591,7 +615,6 @@
                 compareBtn.style.display = "none";
                 nextBtn.style.display = "none";
                 userInput.style.display = "none";
-                // Adjust group buttons for multiplication
                 if (op === "multiplication") {
                     groupSelection.innerHTML = `
                         <button class="group-btn" data-group="0">Base Facts</button>
@@ -736,7 +759,7 @@
                         content += `<h3>${user} (Total Mastered: ${totalMastered}, Points: ${userData.points}, Best Streak: ${userData.streak})</h3>`;
                         Object.keys(userData.mastery).forEach(op => {
                             const opMastered = Object.values(userData.mastery[op]).filter(m => m.correct >= 3).length;
-                            const totalFacts = op === "multiplication" ? 120 : 144; // 48 + 24 + 48 = 120 for mul
+                            const totalFacts = op === "multiplication" ? 120 : 144;
                             content += `<details><summary>${op.charAt(0).toUpperCase() + op.slice(1)} (Mastered: ${opMastered}/${totalFacts})</summary>`;
                             const allAttempts = Object.entries(userData.mastery[op])
                                 .filter(([_, data]) => data.attempts > 0)
